@@ -1,4 +1,4 @@
-package responses;
+package pojos.responses;
 
 public class LoginCourierResponse {
     private String id;
