@@ -1,3 +1,4 @@
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.Before;
@@ -9,7 +10,7 @@ import pojos.LoginCourierBody;
 import static io.restassured.RestAssured.*;
 import static org.junit.Assert.*;
 
-public class CreateCourierTests {
+public class CreateCourierTest {
     final String OK_RESPONSE_STRING = "{\"ok\":true}";
     final String EQUAL_LOGINS_RESPONSE_STRING = "{\"message\":\"Этот логин уже используется\"}";
     final String NO_LOGIN_OR_PASSWORD_RESPONSE_STRING = "{\"message\":\"Недостаточно данных для создания учетной записи\"}";
@@ -24,6 +25,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке создания курьера")
     public void createCourierShouldBePossibleStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, firstName);
 
@@ -38,6 +40,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке создания курьера")
     public void createCourierShouldBePossibleResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, firstName);
 
@@ -53,6 +56,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке создания курьера с уже существующим логином")
     public void createTwoCouriersWithEqualLoginsShouldFailStatusCodeTest(){
         CreateCourierBody courier1 = new CreateCourierBody(login, password, firstName);
         CreateCourierBody courier2 = new CreateCourierBody(login, "password", "firstName");
@@ -75,6 +79,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке создания курьера с уже существующим логином")
     public void createTwoCouriersWithEqualLoginsShouldFailResponseBodyTest(){
         CreateCourierBody courier1 = new CreateCourierBody(login, password, firstName);
         CreateCourierBody courier2 = new CreateCourierBody(login, "password", "firstName");
@@ -99,6 +104,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке создания курьера без указания логина")
     public void createCourierWithoutLoginShouldFailStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody("", password, firstName);
 
@@ -114,6 +120,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке создания курьера без указания логина")
     public void createCourierWithoutLoginShouldFailResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody("", password, firstName);
 
@@ -129,6 +136,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке создания курьера без указания пароля")
     public void createCourierWithoutPasswordShouldFailStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, "", firstName);
 
@@ -144,6 +152,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке создания курьера без указания пароля")
     public void createCourierWithoutPasswordShouldFailResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, "", firstName);
 
@@ -159,6 +168,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке создания курьера без указания имени")
     public void createCourierWithoutFirstNameShouldBePossibleStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, "");
 
@@ -174,6 +184,7 @@ public class CreateCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке создания курьера без указания имени")
     public void createCourierWithoutFirstNameShouldBePossibleResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, "");
 

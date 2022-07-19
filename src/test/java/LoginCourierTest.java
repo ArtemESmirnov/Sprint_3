@@ -1,5 +1,5 @@
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.junit.Before;
 import org.junit.After;
@@ -7,12 +7,11 @@ import org.junit.Test;
 import pojos.CreateCourierBody;
 import pojos.LoginCourierBody;
 
-import java.util.Objects;
-
 import static io.restassured.RestAssured.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.*;
 
-public class LoginCourierTests {
+public class LoginCourierTest{
     final String ACCOUNT_NOT_FOUND_RESPONSE_STRING = "{\"message\":\"Учетная запись не найдена\"}";
     final String NO_LOGIN_OR_PASSWORD_RESPONSE_STRING = "{\"message\":\"Недостаточно данных для входа\"}";
     String login = "uniqueCourierLogin";
@@ -21,20 +20,6 @@ public class LoginCourierTests {
     String wrongLogin = "wrongLogin";
     String wrongPassword = "wrongPassword";
     Response response;
-
-
-    public static String getJsonPath(Response response, String key) {
-        String complete = response.asString();
-        JsonPath js = new JsonPath(complete);
-        try{
-            if(Objects.equals(js.get(key).toString(), ""))
-                return null;
-            return js.get(key).toString();
-        }
-        catch (NullPointerException exception){
-            return null;
-        }
-    }
 
     @Before
     public void setUp() {
@@ -51,6 +36,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера")
     public void loginCourierShouldBePossibleStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody(login, password);
 
@@ -64,6 +50,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера")
     public void loginCourierShouldBePossibleResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody(login, password);
 
@@ -74,11 +61,12 @@ public class LoginCourierTests {
                 .when()
                 .post("/api/v1/courier/login")
                 .then()
+                .assertThat().body("id", notNullValue())
                 .extract().response();
-        assertNotNull(getJsonPath(response, "id"));
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера без указания логина")
     public void loginCourierWithoutLoginShouldFailStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody("", password);
 
@@ -92,6 +80,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера без указания логина")
     public void loginCourierWithoutLoginShouldFailResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody("", password);
 
@@ -107,6 +96,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера без указания пароля")
     public void loginCourierWithoutPasswordShouldFailStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody(login, "");
 
@@ -120,6 +110,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера без указания пароля")
     public void loginCourierWithoutPasswordShouldFailResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody(login, "");
 
@@ -135,6 +126,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера с использованием несуществующего логина")
     public void loginCourierWrongLoginShouldFailStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody(wrongLogin, password);
 
@@ -148,6 +140,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера с использованием несуществующего логина")
     public void loginCourierWrongLoginShouldFailResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody(wrongLogin, password);
 
@@ -163,6 +156,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера с использованием неправильного пароля")
     public void loginCourierWrongPasswordShouldFailStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody(login, wrongPassword);
 
@@ -176,6 +170,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера с использованием неправильного пароля")
     public void loginCourierWrongPasswordShouldFailResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody(login, wrongPassword);
 
@@ -191,6 +186,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка кода ответа при попытке авторизации курьера с использованием неправильного логина и пароля")
     public void loginCourierWrongLoginAndPasswordShouldFailStatusCodeTest(){
         LoginCourierBody courier = new LoginCourierBody(wrongLogin, wrongPassword);
 
@@ -204,6 +200,7 @@ public class LoginCourierTests {
     }
 
     @Test
+    @DisplayName("Проверка тела ответа при попытке авторизации курьера с использованием неправильного логина и пароля")
     public void loginCourierWrongLoginAndPasswordShouldFailResponseBodyTest(){
         LoginCourierBody courier = new LoginCourierBody(wrongLogin, wrongPassword);
 
