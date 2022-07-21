@@ -1,42 +1,35 @@
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
 import pojos.CreateCourierBody;
 import pojos.LoginCourierBody;
 
-import static io.restassured.RestAssured.*;
+import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
+import static requestgenerators.CreateCourierRequestGenerator.createCourierRequest;
+import static requestgenerators.DeleteCourierRequestGenerator.deleteCourierRequest;
+import static requestgenerators.LoginCourierRequestGenerator.loginCourierRequest;
 
 public class CreateCourierTest {
+    final static String courierApiPath = "/api/v1/courier";
+    final static String courierLoginApiPath = "/api/v1/courier/login";
+    final static String courierDeleteApiPath = "/api/v1/courier/{id}";
     final String OK_RESPONSE_STRING = "{\"ok\":true}";
-    final String EQUAL_LOGINS_RESPONSE_STRING = "{\"message\":\"Этот логин уже используется\"}";
-    final String NO_LOGIN_OR_PASSWORD_RESPONSE_STRING = "{\"message\":\"Недостаточно данных для создания учетной записи\"}";
+    final String EQUAL_LOGINS_RESPONSE_STRING = "Этот логин уже используется. Попробуйте другой.";
+    final String NO_LOGIN_OR_PASSWORD_RESPONSE_STRING = "Недостаточно данных для создания учетной записи";
     String login = "uniqueCourierLogin";
     String password = "courierPassword";
     String firstName = "courierName";
     Response response;
-
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-    }
 
     @Test
     @DisplayName("Проверка кода ответа при попытке создания курьера")
     public void createCourierShouldBePossibleStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then().statusCode(201)
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(SC_CREATED, response.statusCode());
     }
 
     @Test
@@ -44,14 +37,7 @@ public class CreateCourierTest {
     public void createCourierShouldBePossibleResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
         assertEquals(OK_RESPONSE_STRING, response.getBody().asString());
     }
 
@@ -61,21 +47,8 @@ public class CreateCourierTest {
         CreateCourierBody courier1 = new CreateCourierBody(login, password, firstName);
         CreateCourierBody courier2 = new CreateCourierBody(login, "password", "firstName");
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier1)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
-        given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier2)
-                .when()
-                .post("/api/v1/courier")
-                .then().statusCode(409);
+        response = createCourierRequest(courier1, courierApiPath);
+        assertEquals(SC_CONFLICT, createCourierRequest(courier2, courierApiPath).statusCode());
     }
 
     @Test
@@ -84,23 +57,8 @@ public class CreateCourierTest {
         CreateCourierBody courier1 = new CreateCourierBody(login, password, firstName);
         CreateCourierBody courier2 = new CreateCourierBody(login, "password", "firstName");
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier1)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
-        Response response2 = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier2)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
-        assertEquals(EQUAL_LOGINS_RESPONSE_STRING, response2.getBody().asString());
+        response = createCourierRequest(courier1, courierApiPath);
+        assertEquals(EQUAL_LOGINS_RESPONSE_STRING, createCourierRequest(courier2, courierApiPath).path("message"));
     }
 
     @Test
@@ -108,15 +66,8 @@ public class CreateCourierTest {
     public void createCourierWithoutLoginShouldFailStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody("", password, firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .statusCode(400)
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
     }
 
     @Test
@@ -124,15 +75,8 @@ public class CreateCourierTest {
     public void createCourierWithoutLoginShouldFailResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody("", password, firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
-        assertEquals(NO_LOGIN_OR_PASSWORD_RESPONSE_STRING, response.getBody().asString());
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(NO_LOGIN_OR_PASSWORD_RESPONSE_STRING, response.path("message"));
     }
 
     @Test
@@ -140,15 +84,8 @@ public class CreateCourierTest {
     public void createCourierWithoutPasswordShouldFailStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, "", firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .statusCode(400)
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
     }
 
     @Test
@@ -156,15 +93,8 @@ public class CreateCourierTest {
     public void createCourierWithoutPasswordShouldFailResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, "", firstName);
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
-        assertEquals(NO_LOGIN_OR_PASSWORD_RESPONSE_STRING, response.getBody().asString());
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(NO_LOGIN_OR_PASSWORD_RESPONSE_STRING, response.path("message"));
     }
 
     @Test
@@ -172,15 +102,8 @@ public class CreateCourierTest {
     public void createCourierWithoutFirstNameShouldBePossibleStatusCodeTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, "");
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .statusCode(201)
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
+        assertEquals(SC_CREATED, response.statusCode());
     }
 
     @Test
@@ -188,35 +111,17 @@ public class CreateCourierTest {
     public void createCourierWithoutFirstNameShouldBePossibleResponseBodyTest(){
         CreateCourierBody courier = new CreateCourierBody(login, password, "");
 
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .extract().response();
+        response = createCourierRequest(courier, courierApiPath);
         assertEquals(OK_RESPONSE_STRING, response.getBody().asString());
     }
 
     @After
     public void deleteCourier(){
-        if(response.statusCode() == 201 || response.statusCode() == 409){
+        if(response.statusCode() == SC_CREATED || response.statusCode() == SC_CONFLICT){
             LoginCourierBody loginCourierBody = new LoginCourierBody(login, password);
-            Integer id = given()
-                    .header("Content-type", "application/json")
-                    .and()
-                    .body(loginCourierBody)
-                    .when()
-                    .post("/api/v1/courier/login")
-                    .then()
-                    .extract()
-                    .path("id");
-            given()
-                    .header("Content-type", "application/json")
-                    .when()
-                    .delete("/api/v1/courier/{id}", id.toString())
-                    .then().statusCode(200);
+
+            Integer id = loginCourierRequest(loginCourierBody, courierLoginApiPath).path("id");
+            assertEquals(SC_OK, deleteCourierRequest(id, courierDeleteApiPath).statusCode());
         }
     }
 }

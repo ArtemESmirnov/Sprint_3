@@ -1,6 +1,6 @@
 package pojos;
 
-public class CreateOrderBody {
+public class CreateOrderBody{
     private String firstName;
     private String lastName;
     private String address;
@@ -97,5 +97,17 @@ public class CreateOrderBody {
         this.deliveryDate = deliveryDate;
         this.comment = comment;
         this.color = color;
+    }
+
+    public CreateOrderBody(String firstName, String lastName, String address, String metroStation,
+                           String phone, int rentTime, String deliveryDate, String comment){
+        this.setFirstName(firstName);
+        this.setLastName(lastName);
+        this.setAddress(address);
+        this.setMetroStation(metroStation);
+        this.setPhone(phone);
+        this.setRentTime(rentTime);
+        this.setDeliveryDate(deliveryDate);
+        this.setComment(comment);
     }
 }

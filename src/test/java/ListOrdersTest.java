@@ -9,11 +9,24 @@ import pojos.LoginCourierBody;
 import pojos.responses.OrderListResponse;
 import pojos.responses.TrackOrderResponse;
 
-import static io.restassured.RestAssured.baseURI;
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static requestgenerators.AcceptOrderRequestGenerator.acceptOrderRequest;
+import static requestgenerators.CreateCourierRequestGenerator.createCourierRequest;
+import static requestgenerators.CreateOrderRequestGenerator.createOrderRequest;
+import static requestgenerators.DeleteCourierRequestGenerator.deleteCourierRequest;
+import static requestgenerators.ListOrdersRequestGenerator.listOrdersRequest;
+import static requestgenerators.LoginCourierRequestGenerator.loginCourierRequest;
+import static requestgenerators.TrackOrderRequestGenerator.trackOrderRequest;
 
 public class ListOrdersTest {
+    final static String ordersApiPath = "/api/v1/orders";
+    final static String ordersTrackApiPath = "/api/v1/orders/track";
+    final static String courierApiPath = "/api/v1/courier";
+    final static String courierLoginApiPath = "/api/v1/courier/login";
+    final static String ordersAcceptApiPath = "/api/v1/orders/accept/{id}";
+    final static String courierDeleteApiPath = "/api/v1/courier/{id}";
     private final String firstName = "Naruto";
     private final String lastName = "Uchiha";
     private final String address = "Konoha, 142 apt.";
@@ -24,62 +37,31 @@ public class ListOrdersTest {
     private final String comment = "Saske, come back to Konoha";
     private final String[] color = {"BLACK", "GREY"};
     private TrackOrderResponse trackOrderResponse;
-    private String courierLogin = "uniqueCourierLogin";
-    private String courierPassword = "courierPassword";
-    private String courierName = "courierName";
+    private final String courierLogin = "uniqueCourierLogin";
+    private final String courierPassword = "courierPassword";
+    private final String courierName = "courierName";
     private int courierId;
     Response createOrderResponse;
 
     @Before
     public void setUp(){
-        baseURI = "http://qa-scooter.praktikum-services.ru/";
         CreateOrderBody createOrderBody = new CreateOrderBody(firstName, lastName, address, metroStation,
                 phone, rentTime, deliveryDate, comment, color);
         CreateCourierBody createCourierBody = new CreateCourierBody(courierLogin, courierPassword, courierName);
         LoginCourierBody loginCourierBody = new LoginCourierBody(courierLogin, courierPassword);
-        createOrderResponse = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(createOrderBody)
-                .when()
-                .post("/api/v1/orders")
-                .then()
-                .extract().response();
-        trackOrderResponse = given()
-                .header("Content-type", "application/json")
-                .queryParam("t", (int)createOrderResponse.path("track"))
-                .get("/api/v1/orders/track")
-                .body().as(TrackOrderResponse.class);
-        given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(createCourierBody)
-                .when()
-                .post("/api/v1/courier");
-        courierId = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(loginCourierBody)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .extract()
-                .path("id");
-        given()
-                .header("Content-type", "application/json")
-                .queryParam("courierId", courierId)
-                .put("/api/v1/orders/accept/{id}", trackOrderResponse.getOrder().getId());
+
+        createOrderResponse = createOrderRequest(createOrderBody, ordersApiPath);
+        trackOrderResponse = trackOrderRequest(createOrderResponse.path("track"),
+                ordersTrackApiPath).as(TrackOrderResponse.class);
+        createCourierRequest(createCourierBody, courierApiPath);
+        courierId = loginCourierRequest(loginCourierBody, courierLoginApiPath).path("id");
+        acceptOrderRequest(trackOrderResponse.getOrder().getId(), courierId, ordersAcceptApiPath);
     }
 
     @Test
     @DisplayName("Проверка кода ответа при запросе списка заказов")
     public void ListOrdersStatusCodeTest() {
-        given()
-                .header("Content-type", "application/json")
-                .when()
-                .get("/api/v1/orders")
-                .then()
-                .assertThat().statusCode(200);
+        assertEquals(SC_OK, listOrdersRequest(ordersApiPath).getStatusCode());
     }
 
     @Test
@@ -87,12 +69,7 @@ public class ListOrdersTest {
     public void ListOrdersResponseBodyTest(){
         boolean isTrackFound = false;
         int i = 0;
-        OrderListResponse orderListResponse = given()
-                .header("Content-type", "application/json")
-                .when()
-                .queryParam("courierId", courierId)
-                .get("/api/v1/orders")
-                .body().as(OrderListResponse.class);
+        OrderListResponse orderListResponse = listOrdersRequest(ordersApiPath, courierId).as(OrderListResponse.class);
 
         while (!isTrackFound && i < orderListResponse.getOrders().size()){
             if(orderListResponse.getOrders().get(i).getTrack() == (int)createOrderResponse.path("track"))
@@ -104,9 +81,6 @@ public class ListOrdersTest {
 
     @After
     public void cleanUp(){
-        given()
-                .header("Content-type", "application/json")
-                .when()
-                .delete("/api/v1/courier/{id}", courierId);
+        deleteCourierRequest(courierId, courierDeleteApiPath);
     }
 }

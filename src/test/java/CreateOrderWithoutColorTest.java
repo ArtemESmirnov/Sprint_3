@@ -1,15 +1,17 @@
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
-import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
-import pojos.CreateOrderBodyWithoutColor;
+import pojos.CreateOrderBody;
 
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.CoreMatchers.notNullValue;
-
+import static org.apache.http.HttpStatus.*;
+import static org.junit.Assert.*;
+import static requestgenerators.CancelOrderRequestGenerator.cancelOrderRequest;
+import static requestgenerators.CreateOrderRequestGenerator.createOrderRequest;
 
 public class CreateOrderWithoutColorTest {
+    final static String ordersApiPath = "/api/v1/orders";
+    final static String ordersCancelApiPath = "/api/v1/orders/cancel";
     private final String firstName = "Naruto";
     private final String lastName = "Uchiha";
     private final String address = "Konoha, 142 apt.";
@@ -20,52 +22,30 @@ public class CreateOrderWithoutColorTest {
     private final String comment = "Saske, come back to Konoha";
     Response response;
 
-    @Before
-    public void setUp(){
-        baseURI = "http://qa-scooter.praktikum-services.ru/";
-    }
-
     @Test
     @DisplayName("Проверка кода ответа при создании заказа без поля color")
     public void createOrderWithoutColorStatusCodeTest(){
-        CreateOrderBodyWithoutColor createOrderBody = new CreateOrderBodyWithoutColor(firstName, lastName, address, metroStation,
+        CreateOrderBody createOrderBody = new CreateOrderBody(firstName, lastName, address, metroStation,
                 phone, rentTime, deliveryDate, comment);
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(createOrderBody)
-                .when()
-                .post("/api/v1/orders")
-                .then()
-                .statusCode(201)
-                .and()
-                .extract().response();
+
+        response = createOrderRequest(createOrderBody, ordersApiPath);
+        assertEquals(SC_CREATED, response.getStatusCode());
     }
 
     @Test
     @DisplayName("Проверка тела ответа при создании заказа без поля color")
     public void createOrderWithoutColorResponseBodyTest(){
-        CreateOrderBodyWithoutColor createOrderBody = new CreateOrderBodyWithoutColor(firstName, lastName, address, metroStation,
+        CreateOrderBody createOrderBody = new CreateOrderBody(firstName, lastName, address, metroStation,
                 phone, rentTime, deliveryDate, comment);
-        response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(createOrderBody)
-                .when()
-                .post("/api/v1/orders")
-                .then()
-                .assertThat().body("track", notNullValue())
-                .and()
-                .extract().response();
+
+        response = createOrderRequest(createOrderBody, ordersApiPath);
+        assertNotNull(response.path("track"));
+        assertNotEquals("", response.path("track"));
     }
 
     @After
     public void cancelOrder(){
-        given()
-                .header("Content-type", "application/json")
-                .and()
-                .queryParam("track", response.path("track").toString())
-                .put("/api/v1/orders/cancel")
-                .then().statusCode(200);
+        assertEquals(SC_OK,
+                cancelOrderRequest(response.path("track").toString(), ordersCancelApiPath).getStatusCode());
     }
 }
